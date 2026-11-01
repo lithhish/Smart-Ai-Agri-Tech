@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Mandi & Uzhavar Sandhai Market Prices - AI Smart Farming</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-dark: #047857;
+            --bg-page: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Nav Styling */
+        .top-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .top-nav-left { display: flex; align-items: center; gap: 16px; }
+
+        .profile-avatar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            padding: 4px 14px 4px 5px;
+            text-decoration: none;
+        }
+        .profile-avatar-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .profile-name-tag { display: flex; flex-direction: column; text-align: left; line-height: 1.2; }
+        .profile-user-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .profile-user-role { font-size: 10px; font-weight: 600; color: #059669; text-transform: uppercase; }
+
+        .top-nav-right { display: flex; align-items: center; gap: 10px; }
+        .top-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .top-nav-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .top-nav-btn.nav-menu-trigger { background: #064e3b; color: #ffffff; border-color: #064e3b; }
+        .top-nav-btn.nav-menu-trigger:hover { background: #047857; }
+
+        .nav-menu-wrapper { position: relative; }
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 300px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+            padding: 8px;
+            z-index: 1001;
+        }
+        .nav-dropdown-menu.active { display: block; }
+        .dropdown-header { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #64748b; padding: 8px 12px 6px; }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1e293b;
+            transition: background 0.15s ease;
+        }
+        .dropdown-item:hover { background: #f1f5f9; }
+        .dropdown-item-featured { background: #f0fdf4; border: 1px solid #bbf7d0; margin-bottom: 4px; }
+        .dropdown-item-featured:hover { background: #dcfce7; }
+        .dropdown-item-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+        .dropdown-item-text { display: flex; flex-direction: column; gap: 2px; }
+        .dropdown-item-title { font-size: 13px; font-weight: 600; color: #0f172a; }
+        .dropdown-item-desc { font-size: 11px; color: #64748b; }
+        .dropdown-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
+
+        /* Container Layout */
+        .container {
+            max-width: 1320px;
+            width: 100%;
+            margin: 20px auto 40px;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .back-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #f8fafc; transform: translateX(-2px); }
+
+        /* Special Erode Tomato Live Spotlight Banner */
+        .spotlight-banner {
+            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #ea580c 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.3);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .spotlight-banner { grid-template-columns: 1fr; }
+        }
+        .spotlight-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .spotlight-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+        .spotlight-desc { font-size: 13px; opacity: 0.9; max-width: 650px; line-height: 1.4; }
+        .spotlight-rate-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 16px 24px;
+            border-radius: 12px;
+            text-align: right;
+        }
+        .spotlight-rate { font-size: 32px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .spotlight-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+        /* Controls Panel */
+        .controls-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .search-box {
+            position: relative;
+            min-width: 260px;
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+        .search-input {
+            width: 100%;
+            padding: 9px 12px 9px 36px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .search-input:focus { outline: none; border-color: #059669; }
+
+        .select-filter {
+            padding: 9px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #ffffff;
+            color: #0f172a;
+            cursor: pointer;
+        }
+
+        /* District Quick Bar */
+        .district-scroll-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .district-chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .district-chip.active, .district-chip:hover {
+            background: #047857;
+            color: #ffffff;
+            border-color: #047857;
+        }
+
+        /* Prices Table Card */
+        .table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .price-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .price-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .price-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .price-table tr:hover td { background: #f8fafc; }
+
+        .crop-cell { font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .market-cell { font-size: 12px; color: #64748b; }
+        .district-badge {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .district-erode {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .price-rate {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 15px;
+            color: #059669;
+        }
+        .trend-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .trend-bullish { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .trend-bearish { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .trend-stable { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav-bar">
+        <div class="top-nav-left">
+            <a href="/" class="profile-avatar-btn">
+                <img src="/static/images/farmer_profile.jpg" alt="R. Selvam" class="profile-avatar-img">
+                <div class="profile-name-tag">
+                    <span class="profile-user-name">R. Selvam</span>
+                    <span class="profile-user-role">Farm Owner</span>
+                </div>
+            </a>
+            <div style="font-size: 14px; font-weight: 700; color: #047857; display: flex; align-items: center; gap: 8px;">
+                <span>🛒 Live Mandi &amp; Uzhavar Sandhai Prices</span>
+            </div>
+        </div>
+        <div class="top-nav-right">
+            <a href="/" class="top-nav-btn" id="navHomeBtn" title="Dashboard Home">
+                <i class="fa-solid fa-house"></i>
+                <span>Home Dashboard</span>
+            </a>
+            <button type="button" class="top-nav-btn" id="navHelpBtn" onclick="toggleHelpModal(true)" title="Farmer Help &amp; Support Guide">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>Help</span>
+            </button>
+            <div class="nav-menu-wrapper">
+                <button type="button" class="top-nav-btn nav-menu-trigger" onclick="toggleMenuDropdown(event)" aria-label="Menu">
+                    <i class="fa-solid fa-bars"></i>
+                    <span>Menu</span>
+                </button>
+                <div id="navMenuDropdown" class="nav-dropdown-menu" role="menu">
+                    <div class="dropdown-header">FARM INTELLIGENCE MENU</div>
+                    <a href="/market-prices" class="dropdown-item dropdown-item-featured" role="menuitem">
+                        <span class="dropdown-item-icon">🛒</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Live Mandi & Uzhavar Sandhai</span>
+                            <span class="dropdown-item-desc">All districts, Erode tomato & live rates</span>
+                        </div>
+                    </a>
+                    <a href="/daily-tasks" class="dropdown-item dropdown-item-featured" role="menuitem">
+                        <span class="dropdown-item-icon">📋</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Daily Farm Tasks & Revenue</span>
+                            <span class="dropdown-item-desc">Noted activities, expenses & farmer benefits</span>
+                        </div>
+                    </a>
+                    <a href="/disease-prediction" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🔬</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Disease Prediction</span>
+                            <span class="dropdown-item-desc">Live camera / photo scan</span>
+                        </div>
+                    </a>
+                    <a href="/trends-forecasts" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">📈</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Trends &amp; Forecasts</span>
+                            <span class="dropdown-item-desc">Climate, disease risk &amp; yield</span>
+                        </div>
+                    </a>
+                    <a href="/farm-records" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">📑</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Farm Records & Subsidies</span>
+                            <span class="dropdown-item-desc">Patta, EB, tax, survey & bills</span>
+                        </div>
+                    </a>
+                    <a href="/rover" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🛰️</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Field Rover GIS</span>
+                            <span class="dropdown-item-desc">Live map & mission control</span>
+                        </div>
+                    </a>
+      <a href="/line-fault" class="dropdown-item dropdown-item-featured" role="menuitem">
+        <span class="dropdown-icon">⚡</span>
+        <div class="dropdown-text">
+          <div class="dropdown-title">Electrical Line Fault & EB Alerts</div>
+          <div class="dropdown-desc">ESP-NOW poles, fallen fronds & line health</div>
+        </div>
+      </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="/" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🏠</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Home Dashboard</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="back-strip">
+            <a href="/" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to Home Dashboard</span>
+            </a>
+            <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                Tamil Nadu Agricultural Marketing Board (Agmarknet &amp; Uzhavar Sandhai Real-Time Network)
+            </div>
+        </div>
+
+        <!-- Spotlight: Erode Uzhavar Sandhai Tomato Rates -->
+        <div class="spotlight-banner">
+            <div>
+                <div class="spotlight-tag">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>LIVE SPOTLIGHT: ERODE UZHAVAR SANDHAI</span>
+                </div>
+                <h1 class="spotlight-title">🍅 Tomato Prices in Erode Uzhavar Sandhai</h1>
+                <p class="spotlight-desc">
+                    Direct farmer-to-consumer daily market benchmark across Periyar Nagar &amp; Sampath Nagar Uzhavar Sandhais. Zero middleman commission with guaranteed instant cash realizations.
+                </p>
+            </div>
+            <div class="spotlight-rate-box">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; opacity:0.85;">Modal Rate</div>
+                <div class="spotlight-rate">₹34 - ₹36 / kg</div>
+                <div class="spotlight-sub">Naatu: ₹34/kg • Hybrid: ₹36/kg</div>
+            </div>
+        </div>
+
+        <!-- District Filter Bar -->
+        <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px;">
+            <i class="fa-solid fa-location-dot"></i> SELECT DISTRICT:
+        </div>
+        <div class="district-scroll-bar" id="districtChipBar">
+            <button class="district-chip active" onclick="setDistrict('all', this)">All Districts (TN)</button>
+            <button class="district-chip" onclick="setDistrict('Erode', this)">📍 Erode (Uzhavar Sandhai)</button>
+            <button class="district-chip" onclick="setDistrict('Coimbatore', this)">📍 Coimbatore</button>
+            <button class="district-chip" onclick="setDistrict('Tiruppur', this)">📍 Tiruppur</button>
+            <button class="district-chip" onclick="setDistrict('Salem', this)">📍 Salem</button>
+            <button class="district-chip" onclick="setDistrict('Dindigul', this)">📍 Dindigul (Oddanchatram)</button>
+            <button class="district-chip" onclick="setDistrict('Madurai', this)">📍 Madurai</button>
+            <button class="district-chip" onclick="setDistrict('Thanjavur', this)">📍 Thanjavur (Delta)</button>
+            <button class="district-chip" onclick="setDistrict('Krishnagiri', this)">📍 Krishnagiri / Hosur</button>
+            <button class="district-chip" onclick="setDistrict('Tirunelveli', this)">📍 Tirunelveli</button>
+            <button class="district-chip" onclick="setDistrict('Chennai', this)">📍 Chennai (Koyambedu)</button>
+        </div>
+
+        <!-- Controls Bar -->
+        
+        <!-- Vegetable Category Quick Bar -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:12px; font-weight:700; color:#047857;">🥦 VEGETABLE QUICK FILTER:</span>
+                <button type="button" class="district-chip" onclick="filterVegQuick('all', this)">All Vegetables (50+)</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Tomato', this)">🍅 Tomato (Naatu &amp; Hybrid)</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Onion', this)">🧅 Small / Big Onion</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Brinjal', this)">🍆 Brinjal / Kattarikai</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Ladies Finger', this)">🌿 Okra / Vendakkai</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Drumstick', this)">🌱 Drumstick / Murungai</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Chilli', this)">🌶️ Green Chilli</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Gourd', this)">🥒 Gourds (Bottle, Snake, Bitter)</button>
+                <button type="button" class="district-chip" onclick="filterVegQuick('Potato', this)">🥔 Potato &amp; Root Veg</button>
+            </div>
+            <div style="font-size:12px; color:#64748b; font-weight:600;" id="vegItemsCount">Showing all vegetable varieties</div>
+        </div>
+
+        <div class="controls-card">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="marketSearchInput" class="search-input" placeholder="Search crop, variety (e.g. Tomato, Erode, Ponni)..." oninput="debounceSearch()">
+            </div>
+
+            <div class="filter-group">
+                <select id="marketCategorySelect" class="select-filter" onchange="loadMandiPrices()">
+                    <option value="Vegetables" selected>🥦 All Vegetables &amp; Horticultural Produce</option>
+                    <option value="all">🌐 All Commodities &amp; Cash Crops</option>
+                    <option value="Commercial">Commercial &amp; Cash Crops</option>
+                    <option value="Cereals">Cereals &amp; Food Grains</option>
+                    <option value="Oilseeds">Oilseeds &amp; Plantation</option>
+                    <option value="Spices">Spices &amp; Roots</option>
+                    <option value="Fruits">Fruits &amp; Floriculture</option>
+                </select>
+
+                <button type="button" class="select-filter" style="background:#f1f5f9;" onclick="loadMandiPrices()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Refresh Rates
+                </button>
+            </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th>Crop / Produce</th>
+                            <th>District &amp; Market Center</th>
+                            <th>Variety / Grade</th>
+                            <th>Live Modal Rate</th>
+                            <th>Min - Max Range</th>
+                            <th>Market Trend &amp; Benchmarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mandiTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding: 40px; color:#64748b;">
+                                Loading live APMC Mandi &amp; Uzhavar Sandhai rates...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenuDropdown(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById("navMenuDropdown");
+            if (menu) menu.classList.toggle("active");
+        }
+
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("navMenuDropdown");
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.remove("active");
+            }
+        });
+
+        let activeDistrict = 'all';
+        let searchTimer = null;
+
+        function filterVegQuick(keyword, btn) {
+            document.querySelectorAll(".district-chip").forEach(b => {
+                if (b.parentElement && b.parentElement.innerHTML.includes("VEGETABLE QUICK FILTER")) {
+                    b.classList.remove("active");
+                }
+            });
+            if (btn) btn.classList.add("active");
+
+            const searchInput = document.getElementById("marketSearchInput");
+            if (keyword === 'all') {
+                searchInput.value = '';
+            } else {
+                searchInput.value = keyword;
+            }
+            loadMandiPrices();
+        }
+
+        function setDistrict(dist, btn) {
+            activeDistrict = dist;
+            document.querySelectorAll(".district-chip").forEach(b => b.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            loadMandiPrices();
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(loadMandiPrices, 300);
+        }
+
+        function loadMandiPrices() {
+            const cat = document.getElementById("marketCategorySelect").value;
+            const search = document.getElementById("marketSearchInput").value.trim();
+
+            let url = `/api/market/prices?t=${Date.now()}`;
+            if (cat && cat !== 'all') url += `&category=${encodeURIComponent(cat)}`;
+            if (activeDistrict && activeDistrict !== 'all') url += `&district=${encodeURIComponent(activeDistrict)}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderMandiTable(data.prices);
+                    }
+                })
+                .catch(err => console.error("Error loading market prices:", err));
+        }
+
+        function renderMandiTable(prices) {
+            const tbody = document.getElementById("mandiTableBody");
+            const vegCountEl = document.getElementById("vegItemsCount");
+            if (vegCountEl && prices) {
+                vegCountEl.textContent = `Showing ${prices.length} live produce items`;
+            }
+            if (!prices || prices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color:#64748b;">
+                    No market price records found matching your filters.
+                </td></tr>`;
+                return;
+            }
+
+            let html = "";
+            prices.forEach(p => {
+                const trendClass = p.trend_type === "bullish" ? "trend-bullish" : (p.trend_type === "bearish" ? "trend-bearish" : "trend-stable");
+                const trendIcon = p.trend_type === "bullish" ? "▲" : (p.trend_type === "bearish" ? "▼" : "●");
+                const isErode = (p.district || "").toLowerCase() === "erode";
+
+                html += `
+                <tr>
+                    <td>
+                        <div class="crop-cell">
+                            <span>${escapeHtml(p.crop)}</span>
+                        </div>
+                        <div style="font-size:11px; color:#64748b;">${escapeHtml(p.category || "")}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600; color:#0f172a;">${escapeHtml(p.market)}</div>
+                        <span class="district-badge ${isErode ? 'district-erode' : ''}">
+                            <i class="fa-solid fa-location-dot"></i> ${escapeHtml(p.district || p.state)}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-weight:600; color:#334155;">${escapeHtml(p.variety || "Standard")}</span>
+                        <div style="font-size:11px; color:#94a3b8;">${escapeHtml(p.unit)}</div>
+                    </td>
+                    <td>
+                        <div class="price-rate">₹${Number(p.modal_price).toLocaleString('en-IN')}</div>
+                        <div style="font-size:11px; color:#64748b;">Modal Rate / ${escapeHtml(p.unit.replace('₹ / ', ''))}</div>
+                    </td>
+                    <td>
+                        <div style="font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:600;">
+                            ₹${Number(p.min_price).toLocaleString('en-IN')} - ₹${Number(p.max_price).toLocaleString('en-IN')}
+                        </div>
+                        <div style="font-size:11px; color:#94a3b8;">Arrivals: ${p.arrival_tonnes} tonnes</div>
+                    </td>
+                    <td>
+                        <span class="trend-pill ${trendClass}">${trendIcon} ${escapeHtml(p.trend || "Active")}</span>
+                        <div style="font-size:11px; color:#64748b; margin-top:4px;">${escapeHtml(p.benchmark || "Agmarknet Regulated")}</div>
+                    </td>
+                </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        document.addEventListener("DOMContentLoaded", loadMandiPrices);
+    
+// Help Modal toggling
+        function toggleHelpModal(show) {
+            const modal = document.getElementById("helpModal");
+            if (modal) {
+                if (show) {
+                    modal.classList.add("active");
+                    document.body.style.overflow = "hidden";
+                } else {
+                    modal.classList.remove("active");
+                    document.body.style.overflow = "";
+                }
+            }
+        }
+
+        function handleHelpBackdropClick(e) {
+            if (e.target.id === "helpModal") {
+                toggleHelpModal(false);
+            }
+        }
+    </script>
+<!-- Farmer Help & Support Guide Modal -->
+    <div id="helpModal" class="about-modal-backdrop" onclick="handleHelpBackdropClick(event)">
+        <div class="about-modal-card" style="max-width: 680px;">
+            <div class="about-modal-header" style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%);">
+                <div>
+                    <div class="about-badge" style="background: rgba(255,255,255,0.2); color: #fff;">❓ FARMER ASSISTANCE</div>
+                    <h2 class="about-modal-title" style="color: #fff; margin-top: 4px;">Farmer Help &amp; Operations Guide</h2>
+                </div>
+                <button type="button" class="about-modal-close" onclick="toggleHelpModal(false)" aria-label="Close help">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="about-modal-body" style="padding: 24px; max-height: 70vh; overflow-y: auto;">
+                <p style="font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 20px;">
+                    Welcome to the <strong>AI Smart Precision Farming Platform</strong>. Use this quick reference guide to navigate modules, resolve field alerts, and access toll-free farmer emergency hotlines.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #047857; margin-bottom: 4px;">💧 Irrigation Advisory</div>
+                        <p style="font-size: 12px; color: #64748b; line-height: 1.4;">
+                            The pump threshold is <strong>40.0%</strong>. If root-zone moisture drops below 40%, the system triggers an advisory to switch pump ON.
+                        </p>
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #047857; margin-bottom: 4px;">🛒 Live Mandi &amp; Uzhavar</div>
+                        <p style="font-size: 12px; color: #64748b; line-height: 1.4;">
+                            Access live daily rates for 50+ vegetables and cash crops across all Tamil Nadu districts with Erode Uzhavar Sandhai tomato rates.
+                        </p>
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #047857; margin-bottom: 4px;">📋 Daily Tasks &amp; Ledger</div>
+                        <p style="font-size: 12px; color: #64748b; line-height: 1.4;">
+                            Log daily agricultural operations, input costs, and crop harvest sales to track net farmer profits and ROI.
+                        </p>
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #047857; margin-bottom: 4px;">🔬 Disease &amp; Agronomy AI</div>
+                        <p style="font-size: 12px; color: #64748b; line-height: 1.4;">
+                            Snap or upload crop leaf photos to get instant ICAR / TNAU validated pest &amp; disease diagnosis and organic remedies.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">📞 Agricultural Emergency Helplines (24x7 Free):</div>
+                    <ul style="font-size: 12px; color: #166534; line-height: 1.6; margin-left: 18px;">
+                        <li><strong>Kisan Call Centre (Toll-Free):</strong> 1800-180-1551</li>
+                        <li><strong>TNAU Agritech Portal Desk:</strong> 0422-6611383</li>
+                        <li><strong>PM-Kisan National Helpline:</strong> 155261 / 011-24300606</li>
+                        <li><strong>PMFBY Crop Insurance:</strong> 14447</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="about-modal-footer" style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn-about-close" onclick="toggleHelpModal(false)">Close Help</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+

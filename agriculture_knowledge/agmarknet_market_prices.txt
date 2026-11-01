@@ -1,0 +1,21 @@
+# Agmarknet & State Agricultural Marketing Board (Tamil Nadu & India)
+Source: Ministry of Agriculture and Farmers Welfare (Agmarknet) & Tamil Nadu Agricultural University (TNAU DEMIC)
+Document Title: Official Cash-Crop Market Price Information, MSP Benchmarks & Mandi Portals
+Reference URL: https://agmarknet.gov.in
+Publication Year: 2024
+
+## Section 1: Official Agricultural Market Price Sources & Mandi Intelligence
+- Official Daily Mandi Portal: The Directorate of Marketing & Inspection (DMI) operates the Agmarknet portal (https://agmarknet.gov.in) and e-NAM (National Agriculture Market - https://enam.gov.in). These platforms publish real-time daily modal prices across regulated APMC mandis nationwide.
+- Tamil Nadu Price Dissemination: TNAU DEMIC (Domestic and Export Market Intelligence Cell) provides forecast prices and market arrivals for major agricultural commodities across regulated markets in Tamil Nadu (e.g., Coimbatore, Erode, Tiruppur, Vellore, Theni).
+
+## Section 2: Minimum Support Price (MSP) & Fair Remunerative Price (FRP) Benchmarks
+- Sugarcane Pricing: For sugarcane, the central government announces the Fair and Remunerative Price (FRP) payable by sugar mills per quintal of sugarcane, linked to a basic sugar recovery rate (standard benchmark ~ ₹315 - ₹340 per quintal depending on recovery %). State Advised Prices (SAP) may additionally be notified by state governments.
+- Cotton (Medium / Long Staple): Regulated under Government of India Minimum Support Price (MSP) with procurement supported by the Cotton Corporation of India (CCI). Average benchmark ranges between ₹6,620 to ₹7,520 per quintal.
+- Groundnut (in shell): Minimum Support Price (MSP) benchmark declared by the Government of India is approximately ₹6,377 to ₹6,783 per quintal.
+
+## Section 3: Farmer Advisory for Fetching Real-Time Market Rates
+- Because daily market auction rates fluctuate hour-by-hour in local APMC mandis based on daily moisture percentage, quality grade, and arrivals, farmers should check official live mandi rates via:
+  1. Agmarknet Portal: https://agmarknet.gov.in
+  2. e-NAM Mobile App & Portal: https://enam.gov.in
+  3. Kisan Call Centre (Toll-Free): 1800-180-1551
+  4. Regulated Market Committee (RMC) notices in your respective district mandi.

@@ -1,0 +1,38 @@
+# ICAR & TNAU Cash-Crop Irrigation & Soil Moisture Guidelines
+Source: ICAR (Indian Council of Agricultural Research) & TNAU (Tamil Nadu Agricultural University) Agritech Portal
+Document Title: Precision Irrigation and Water Management for Major Cash Crops in South India
+Reference URL: https://agritech.tnau.ac.in/agriculture/agri_irrigation.html
+Publication Year: 2023
+
+## Section 1: Sugarcane (Saccharum officinarum) Water & Soil Moisture Management
+- Critical Growth Stages: Formative phase (60-120 days after planting) is the most critical stage for moisture stress. Grand growth period (120-250 days) also demands uniform moisture.
+- Irrigation Water Threshold: For clay loam and loamy soils, irrigation should be scheduled when available soil moisture (ASM) drops below 50% to 55%, or when root-zone soil moisture reading drops below 40% volumetric content.
+- Soil pH Range: Optimal soil pH for sugarcane is 6.5 to 7.5. Acidic soils (< 6.0) require liming (agricultural lime or dolomite), whereas alkaline soils (> 8.0) benefit from gypsum application and pressmud.
+- Fertilizer & NPK: Recommended dose for sugarcane in Tamil Nadu is 275:63:112 kg N:P2O5:K2O per hectare. Nitrogen should be split into 3-4 doses applied at 30, 60, and 90 days. Avoid late application of nitrogen as it reduces sugar recovery.
+- Official Warning: Do not over-irrigate during tillering or maturity phase, as waterlogging impedes tillering and promotes red rot disease.
+
+## Section 2: Cotton (Gossypium spp.) Soil Moisture & Best Practices
+- Critical Growth Stages: Flowering and boll formation stages are extremely sensitive to soil moisture deficit. Water stress during flowering results in premature shedding of squares and young bolls.
+- Moisture Threshold: Maintain root-zone moisture between 45% and 65%. If soil moisture drops below 35%, immediate light irrigation is advised. Avoid heavy flood irrigation which causes flower and boll drop.
+- Soil pH Range: Cotton thrives well in soils with pH 6.0 to 8.0. Deep black cotton soils (Vertisols) retain moisture longer and require careful drainage to prevent collar rot.
+- NPK Interpretation: Recommended fertilizer schedule is 80:40:40 kg/ha for rainfed/irrigated hybrids. Foliar spray of 1% DAP and 1% KCl at square initiation and boll development enhances boll retention.
+
+## Section 3: Groundnut (Peanut - Arachis hypogaea) Precision Water Scheduling
+- Critical Growth Stages: Flowering (20-35 days), peg penetration (35-50 days), and pod development (50-75 days). Peg entry into soil requires adequate moisture; hard, dry crust prevents pegs from entering the soil.
+- Soil Moisture Limits: Recommended irrigation when soil moisture falls below 40%. Excessive water (>75%) during ripening causes pods to rot and encourages Aspergillus flavus (aflatoxin contamination).
+- Soil Health & pH: Optimum pH is 6.0 to 7.0. Calcium application in the form of gypsum @ 400 kg/ha at pegging (40-45th day) is critical for proper pod filling and reducing empty pods (pops).
+
+## Section 4: General Interpretation of NPK Soil Test Values
+- Available Nitrogen (N):
+  * Low: < 280 kg/ha (or < 140 mg/kg)
+  * Medium: 280 - 560 kg/ha (140 - 280 mg/kg)
+  * High: > 560 kg/ha (> 280 mg/kg)
+- Available Phosphorus (P):
+  * Low: < 11 kg/ha (or < 5 mg/kg)
+  * Medium: 11 - 25 kg/ha (5 - 11 mg/kg)
+  * High: > 25 kg/ha (> 11 mg/kg)
+- Available Potassium (K):
+  * Low: < 118 kg/ha (or < 60 mg/kg)
+  * Medium: 118 - 280 kg/ha (60 - 140 mg/kg)
+  * High: > 280 kg/ha (> 140 mg/kg)
+- Advisory Rule: Always base fertilizer application on official soil testing lab (STL) soil health cards issued by state agricultural departments.

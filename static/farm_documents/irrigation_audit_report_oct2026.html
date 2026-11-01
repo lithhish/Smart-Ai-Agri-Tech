@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Official Irrigation & Soil Moisture Telemetry Report</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 40px; color: #1e293b; background: #fff; }
+.header { border-bottom: 2px solid #064e3b; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+.logo-title { font-size: 22px; font-weight: 800; color: #064e3b; }
+.sub { font-size: 13px; color: #64748b; margin-top: 4px; }
+.seal { text-align: right; font-size: 12px; color: #047857; font-weight: 700; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.meta-item { font-size: 13px; }
+.meta-label { color: #64748b; font-size: 11px; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+.meta-val { font-weight: 700; color: #0f172a; }
+.telemetry-card { background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 18px; margin-bottom: 24px; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #047857; color: #fff; }
+table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+th { background: #f1f5f9; color: #475569; font-weight: 700; }
+.footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 14px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo-title">🌱 AI SMART FARMING - PRECISION IRRIGATION AUDIT REPORT</div>
+    <div class="sub">Autonomous LoRa Telemetry & 40.0% Moisture Threshold Compliance Verification</div>
+  </div>
+  <div class="seal">
+    <div>OFFICIAL FARM AUDIT</div>
+    <div>ISO / ICAR COMPLIANT</div>
+  </div>
+</div>
+
+<div class="meta-grid">
+  <div class="meta-item"><div class="meta-label">Farm Region</div><div class="meta-val">Perur, Coimbatore (11.02°N, 76.96°E)</div></div>
+  <div class="meta-item"><div class="meta-label">Survey Extent</div><div class="meta-val">Survey No: 142/3A (4.85 Acres)</div></div>
+  <div class="meta-item"><div class="meta-label">Audit Period</div><div class="meta-val">October 2026 Telemetry Cycle</div></div>
+</div>
+
+<div class="telemetry-card">
+  <span class="badge">✅ THRESHOLD ADHERENCE: ADEQUATE</span>
+  <h3 style="margin: 8px 0 4px 0; color: #064e3b;">Root-Zone Moisture: 42.5% (Configured Threshold: 40.0%)</h3>
+  <p style="margin: 0; font-size: 13px; color: #047857;">Root-zone moisture (42.5%) strictly exceeds threshold (&ge; 40.0%). Water conservation valve remains safely closed. Zero unneeded power consumption.</p>
+</div>
+
+<h3>📡 LoRa On-Field Hardware Telemetry Log</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Root Soil Moisture</th>
+      <th>Farm Air Temp</th>
+      <th>Humidity</th>
+      <th>Soil Temp</th>
+      <th>Decision Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-10-15 20:15 UTC</td>
+      <td><strong>42.5 %</strong></td>
+      <td>24.8 °C</td>
+      <td>65.0 %</td>
+      <td>23.2 °C</td>
+      <td><span style="color:#047857; font-weight:700;">No Irrigation Required</span></td>
+    </tr>
+    <tr>
+      <td>2026-10-15 14:00 UTC</td>
+      <td>43.1 %</td>
+      <td>27.5 °C</td>
+      <td>62.0 %</td>
+      <td>24.8 °C</td>
+      <td><span style="color:#047857; font-weight:700;">No Irrigation Required</span></td>
+    </tr>
+    <tr>
+      <td>2026-10-15 08:00 UTC</td>
+      <td>44.0 %</td>
+      <td>22.1 °C</td>
+      <td>78.0 %</td>
+      <td>21.5 °C</td>
+      <td><span style="color:#047857; font-weight:700;">No Irrigation Required</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  <div>Certified by Precision Agriculture IoT Controller v2.4</div>
+  <div>Signature: Authorized Agronomy Sensor Telemetry Log</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Line Fault & Pole Monitoring - AI Smart Farming</title>
+    <!-- Leaflet GIS Mapping for Electrical Poles -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-dark: #047857;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --bg-page: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Nav Styling */
+        .top-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .top-nav-left { display: flex; align-items: center; gap: 16px; }
+
+        .profile-avatar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            padding: 4px 14px 4px 5px;
+            text-decoration: none;
+        }
+        .profile-avatar-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .profile-name-tag { display: flex; flex-direction: column; text-align: left; line-height: 1.2; }
+        .profile-user-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .profile-user-role { font-size: 10px; font-weight: 600; color: #059669; text-transform: uppercase; }
+
+        .top-nav-right { display: flex; align-items: center; gap: 10px; }
+        .top-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .top-nav-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .top-nav-btn.nav-menu-trigger { background: #064e3b; color: #ffffff; border-color: #064e3b; }
+        .top-nav-btn.nav-menu-trigger:hover { background: #047857; }
+
+        .nav-menu-wrapper { position: relative; }
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 320px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+            padding: 8px;
+            z-index: 1001;
+        }
+        .nav-dropdown-menu.active { display: block; }
+        .dropdown-header { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #64748b; padding: 8px 12px 6px; }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1e293b;
+            transition: background 0.15s ease;
+        }
+        .dropdown-item:hover { background: #f1f5f9; }
+        .dropdown-item-featured { background: #f0fdf4; border: 1px solid #bbf7d0; margin-bottom: 4px; }
+        .dropdown-item-featured:hover { background: #dcfce7; }
+        .dropdown-item-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+        .dropdown-item-text { display: flex; flex-direction: column; gap: 2px; }
+        .dropdown-item-title { font-size: 13px; font-weight: 600; color: #0f172a; }
+        .dropdown-item-desc { font-size: 11px; color: #64748b; }
+        .dropdown-divider { height: 1px; background: #e2e8f0; margin: 6px 0; }
+
+        /* Container Layout */
+        .container {
+            max-width: 1360px;
+            width: 100%;
+            margin: 20px auto 40px;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .back-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #f8fafc; transform: translateX(-2px); }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #064e3b 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+        @media (max-width: 800px) {
+            .hero-banner { grid-template-columns: 1fr; }
+        }
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .hero-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+        .hero-desc { font-size: 13px; color: #cbd5e1; max-width: 720px; line-height: 1.5; }
+
+        .gateway-status-pill {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 16px 20px;
+            border-radius: 12px;
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .gw-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 6px;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: all 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+        .kpi-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+        .kpi-val { font-size: 26px; font-weight: 800; color: #0f172a; font-family: 'JetBrains Mono', monospace; }
+        .kpi-val.green { color: #059669; }
+        .kpi-val.red { color: #dc2626; }
+        .kpi-val.amber { color: #d97706; }
+        .kpi-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        /* Main Two-Column Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 1024px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        .card-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .panel-title { font-size: 16px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+
+        /* Map Card */
+        #poleMap {
+            height: 380px;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            z-index: 10;
+        }
+
+        /* Pole Node List */
+        .pole-card-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .pole-card-item:hover { border-color: #94a3b8; background: #ffffff; }
+        .pole-card-item.fault {
+            border-color: #f87171;
+            background: #fef2f2;
+        }
+        .pole-card-item.comm-loss {
+            border-color: #fde047;
+            background: #fefce8;
+        }
+
+        .pole-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .pole-id-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #0f172a;
+            color: #ffffff;
+        }
+        .badge-status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            text-transform: uppercase;
+        }
+        .status-healthy { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .status-fault { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .status-commloss { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
+        .pole-specs-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 8px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        /* Simulation Deck */
+        .sim-control-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 14px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; }
+        .form-select, .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #ffffff;
+        }
+        .btn-trigger {
+            width: 100%;
+            background: #dc2626;
+            color: #ffffff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-trigger:hover { background: #b91c1c; }
+
+        /* Fault Log Table */
+        .fault-table-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .fault-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .fault-table th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .fault-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .fault-table tr:hover td { background: #f8fafc; }
+
+        .btn-resolve {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-resolve:hover { background: #059669; }
+        .tag-resolved { color: #059669; font-weight: 700; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav-bar">
+        <div class="top-nav-left">
+            <a href="/" class="profile-avatar-btn">
+                <img src="/static/images/farmer_profile.jpg" alt="R. Selvam" class="profile-avatar-img">
+                <div class="profile-name-tag">
+                    <span class="profile-user-name">R. Selvam</span>
+                    <span class="profile-user-role">Farm Owner</span>
+                </div>
+            </a>
+            <div style="font-size: 14px; font-weight: 700; color: #047857; display: flex; align-items: center; gap: 8px;">
+                <span>⚡ ESP32 Electrical Line Fault &amp; Pole Monitoring</span>
+            </div>
+        </div>
+        <div class="top-nav-right">
+            <a href="/" class="top-nav-btn" id="navHomeBtn" title="Dashboard Home">
+                <i class="fa-solid fa-house"></i>
+                <span>Home Dashboard</span>
+            </a>
+            <button type="button" class="top-nav-btn" onclick="toggleHelpModal(true)" title="Help">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>Help</span>
+            </button>
+            <div class="nav-menu-wrapper">
+                <button type="button" class="top-nav-btn nav-menu-trigger" onclick="toggleMenuDropdown(event)" aria-label="Menu">
+                    <i class="fa-solid fa-bars"></i>
+                    <span>Menu</span>
+                </button>
+                <div id="navMenuDropdown" class="nav-dropdown-menu" role="menu">
+                    <div class="dropdown-header">FARM INTELLIGENCE MENU</div>
+                    <a href="/line-fault" class="dropdown-item dropdown-item-featured" role="menuitem">
+                        <span class="dropdown-item-icon">⚡</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Electrical Line Fault &amp; EB Alerts</span>
+                            <span class="dropdown-item-desc">ESP-NOW poles, fallen fronds &amp; line health</span>
+                        </div>
+                    </a>
+                    <a href="/market-prices" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🛒</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Live Mandi &amp; Uzhavar Sandhai</span>
+                            <span class="dropdown-item-desc">All districts, Erode tomato &amp; 50+ vegetables</span>
+                        </div>
+                    </a>
+                    <a href="/daily-tasks" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">📋</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Daily Farm Tasks &amp; Revenue</span>
+                            <span class="dropdown-item-desc">Noted activities, expenses &amp; farmer benefits</span>
+                        </div>
+                    </a>
+                    <a href="/disease-prediction" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🔬</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Disease Prediction</span>
+                            <span class="dropdown-item-desc">Live camera / photo scan</span>
+                        </div>
+                    </a>
+                    <a href="/trends-forecasts" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">📈</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Trends &amp; Forecasts</span>
+                            <span class="dropdown-item-desc">Climate, disease risk &amp; yield</span>
+                        </div>
+                    </a>
+                    <a href="/farm-records" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">📑</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Farm Records &amp; Subsidies</span>
+                            <span class="dropdown-item-desc">Patta, EB, tax, survey &amp; bills</span>
+                        </div>
+                    </a>
+                    <a href="/rover" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🛰️</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Field Rover GIS</span>
+                            <span class="dropdown-item-desc">Live map &amp; mission control</span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="/" class="dropdown-item" role="menuitem">
+                        <span class="dropdown-item-icon">🏠</span>
+                        <div class="dropdown-item-text">
+                            <span class="dropdown-item-title">Home Dashboard</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="back-strip">
+            <a href="/" class="btn-back">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to Home Dashboard</span>
+            </a>
+            <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                TANGEDCO Rural Ag-Feeder • Isolated Optical Sensing Bridge • Survey 142/3A
+            </div>
+        </div>
+
+        <!-- Hero Header -->
+        <div class="hero-banner">
+            <div>
+                <div class="hero-tag">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>ESP32 EDGE MESH + ESP-NOW 2.4GHz PROTOCOL</span>
+                </div>
+                <h1 class="hero-title">⚡ Electrical Line Fault &amp; Pole Monitoring Network</h1>
+                <p class="hero-desc">
+                    Real-time safety and power failure detection across agricultural power feeder poles. Uses isolated non-contact current sensors, optocoupler voltage detectors, and vibration/tilt shock sensors. Identifies fallen coconut fronds, wire snaps, and power cutouts before equipment damage occurs.
+                </p>
+            </div>
+            <div class="gateway-status-pill">
+                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px;">Gateway Node</div>
+                <div style="font-size: 15px; font-weight: 700; color: #fff;">
+                    <span class="gw-dot"></span><span id="gwStatus">ONLINE</span>
+                </div>
+                <div style="font-size: 11px; color: #cbd5e1; margin-top: 4px;" id="gwWifi">Wi-Fi: TNAU_AgriSmart (-62 dBm)</div>
+                <div style="font-size: 11px; color: #34d399; margin-top: 2px;" id="gwQueue">Offline Queue: 0 Events</div>
+            </div>
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Feeder Line Status</div>
+                <div class="kpi-val green" id="kpiFeeder">ACTIVE (415V)</div>
+                <div class="kpi-sub" id="kpiFeederSub">3-Phase Rural Agro Supply</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Monitored Poles</div>
+                <div class="kpi-val" id="kpiPoles">5 Poles</div>
+                <div class="kpi-sub">P-01 to P-05 (1.4 km Span)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Active Fault Alerts</div>
+                <div class="kpi-val red" id="kpiActiveFaults">0 Faults</div>
+                <div class="kpi-sub">Immediate Action Required</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">ESP-NOW Heartbeat</div>
+                <div class="kpi-val green" id="kpiHeartbeat">100% HEALTHY</div>
+                <div class="kpi-sub">Comm Timeout: 45s Threshold</div>
+            </div>
+        </div>
+
+        <!-- Main Grid: Left GIS Pole Network + Right Pole List & Simulator -->
+        <div class="main-layout">
+            <!-- Left: GIS Map & Section Identification -->
+            <div class="card-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fa-solid fa-map-location-dot" style="color:#059669;"></i>
+                        <span>Feeder Section Topology &amp; GIS Map</span>
+                    </h2>
+                    <span style="font-size: 12px; color: #64748b;" id="mapSectionStatus">All sections operational</span>
+                </div>
+
+                
+                <div style="position: relative;">
+                    <div id="poleMap"></div>
+                    <div style="position: absolute; top: 12px; right: 12px; z-index: 1000; display: flex; gap: 8px;">
+                        <button type="button" onclick="focusFaultMap()" class="btn-back" style="background: rgba(15, 23, 42, 0.85); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; font-size: 11.5px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Recenter Map on Feeder Line">
+                            🎯 Center Line
+                        </button>
+                        <button type="button" id="btnFaultTileToggle" onclick="toggleFaultTileLayer()" class="btn-back" style="background: rgba(15, 23, 42, 0.85); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; font-size: 11.5px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Toggle Satellite/Street Map">
+                            🗺️ Hybrid
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <div style="font-size: 12px; color: #475569;">
+                        <strong>Legend:</strong>
+                        <span style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:50%; margin:0 4px 0 8px;"></span> Healthy Pole
+                        <span style="display:inline-block; width:10px; height:10px; background:#dc2626; border-radius:50%; margin:0 4px 0 8px;"></span> Faulted / Frond Strike
+                        <span style="display:inline-block; width:10px; height:10px; background:#d97706; border-radius:50%; margin:0 4px 0 8px;"></span> Comm Timeout
+                    </div>
+                    <button type="button" class="btn-back" style="padding:4px 10px; font-size:12px;" onclick="fetchPoleStatus()">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh Telemetry
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Pole Node Cards & Simulation Deck -->
+            <div class="card-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <i class="fa-solid fa-tower-broadcast" style="color:#2563eb;"></i>
+                        <span>Pole Nodes &amp; Diagnostic Deck</span>
+                    </h2>
+                </div>
+
+                <!-- Pole Nodes List -->
+                <div id="poleNodesContainer" style="max-height: 280px; overflow-y: auto; margin-bottom: 16px;">
+                    <div style="text-align:center; padding:20px; color:#94a3b8;">Loading pole node statuses...</div>
+                </div>
+
+                <!-- Prototype Safe Fault Simulator -->
+                <div class="sim-control-box">
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-flask" style="color:#dc2626;"></i>
+                        <span>Simulate Isolated Line Fault / Leaf Strike</span>
+                    </div>
+                    <p style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+                        Safe prototype test: injects simulated isolated sensor signals to verify alerts without touching live 415V lines.
+                    </p>
+
+                    <form onsubmit="handleSimulateFault(event)">
+                        <div class="form-group">
+                            <label class="form-label">Target Pole Node:</label>
+                            <select id="simPoleSelect" class="form-select">
+                                <option value="P-03" selected>Pole P-03 (Coconut Grove Border - High Risk)</option>
+                                <option value="P-02">Pole P-02 (Canal Embankment)</option>
+                                <option value="P-04">Pole P-04 (Borewell Pump Shed)</option>
+                                <option value="P-01">Pole P-01 (Transformer Tap-Off)</option>
+                                <option value="P-05">Pole P-05 (Solar Dock Terminal)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Fault Event Condition:</label>
+                            <select id="simFaultType" class="form-select">
+                                <option value="FALLEN_COCONUT_FROND" selected>🌴 Fallen Coconut Leaf / Branch Strike (Vibration + Tilt + Opto Zero)</option>
+                                <option value="LINE_CONDUCTOR_SNAP">⚡ Line Conductor Snap (Physical Break &amp; Phase Drop)</option>
+                                <option value="TOTAL_POWER_FAILURE">🔌 Total Power Failure (Substation 11kV Grid Cutout)</option>
+                                <option value="PHASE_IMBALANCE">⚖️ Phase Imbalance (Low Voltage 180V on Phase Y)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn-trigger">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Trigger Isolated Fault Simulation</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident History Logbook -->
+        <div class="fault-table-card">
+            <div class="panel-header" style="padding: 16px 20px; margin: 0; background: #ffffff;">
+                <h2 class="panel-title">
+                    <i class="fa-solid fa-clipboard-list" style="color:#0f172a;"></i>
+                    <span>TANGEDCO &amp; Farmer Incident Logbook (Dispatched Alerts)</span>
+                </h2>
+                <div style="font-size: 12px; color: #64748b;" id="faultCountLabel">History records</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="fault-table">
+                    <thead>
+                        <tr>
+                            <th>Incident ID</th>
+                            <th>Pole &amp; Affected Section</th>
+                            <th>Fault Type &amp; Severity</th>
+                            <th>Sensor Evidence</th>
+                            <th>Notified Authorized Officers</th>
+                            <th>Time</th>
+                            <th>Status &amp; Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faultTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding: 30px; color:#64748b;">
+                                Loading fault records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="about-modal-backdrop" onclick="handleHelpBackdropClick(event)">
+        <div class="about-modal-card" style="max-width: 650px;">
+            <div class="about-modal-header" style="background:#064e3b; color:#fff; padding:16px 20px;">
+                <h3 style="margin:0; font-size:16px; font-weight:700;">⚡ Line Fault &amp; Safety Help</h3>
+                <button type="button" class="btn-back" style="padding:2px 8px; font-size:11px;" onclick="toggleHelpModal(false)">Close</button>
+            </div>
+            <div style="padding: 20px; font-size: 13px; line-height: 1.5; color: #334155;">
+                <p><strong>ESP-NOW Architecture:</strong> Battery-powered ESP32 nodes attached to electric poles communicate via 2.4GHz ESP-NOW to an on-farm Gateway ESP32, which forwards data over Wi-Fi.</p>
+                <p style="margin-top:10px;"><strong>Safety Note:</strong> Prototype nodes use isolated non-contact current coils, opto-isolated stepdown circuits, and ADXL345 vibration/tilt sensors. Never connect microcontrollers directly to high-voltage lines.</p>
+                <p style="margin-top:10px;"><strong>TANGEDCO Emergency:</strong> Contact TANGEDCO AE Perur at 94458-52140 or dial 1912 for power emergencies.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenuDropdown(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById("navMenuDropdown");
+            if (menu) menu.classList.toggle("active");
+        }
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("navMenuDropdown");
+            if (menu && !menu.contains(e.target)) {
+                menu.classList.remove("active");
+            }
+        });
+
+        function toggleHelpModal(show) {
+            const m = document.getElementById("helpModal");
+            if (m) m.style.display = show ? "flex" : "none";
+        }
+        function handleHelpBackdropClick(e) {
+            if (e.target.id === "helpModal") toggleHelpModal(false);
+        }
+
+        // Leaflet GIS Map Setup
+        let mapInstance = null;
+        let poleMarkers = {};
+        let linePolylines = [];
+
+        let faultActiveTileLayer = 'osm';
+        let faultTileLayers = {};
+
+        function focusFaultMap() {
+            if (mapInstance) {
+                mapInstance.setView([11.2710, 77.6100], 16, { animate: true });
+            }
+        }
+
+        function toggleFaultTileLayer() {
+            if (!mapInstance) return;
+            const btn = document.getElementById("btnFaultTileToggle");
+            if (faultActiveTileLayer === 'osm') {
+                if (faultTileLayers.osm) mapInstance.removeLayer(faultTileLayers.osm);
+                if (!faultTileLayers.satellite) {
+                    faultTileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+                }
+                faultTileLayers.satellite.addTo(mapInstance);
+                faultActiveTileLayer = 'satellite';
+                if (btn) btn.textContent = "🗺️ Street";
+            } else {
+                if (faultTileLayers.satellite) mapInstance.removeLayer(faultTileLayers.satellite);
+                if (faultTileLayers.osm) faultTileLayers.osm.addTo(mapInstance);
+                faultActiveTileLayer = 'osm';
+                if (btn) btn.textContent = "🗺️ Hybrid";
+            }
+        }
+
+        function initMap() {
+            mapInstance = L.map('poleMap').setView([11.2710, 77.6100], 16);
+            faultTileLayers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(mapInstance);
+        }
+
+        function updateMap(poles) {
+            if (!mapInstance) return;
+
+            // Clear old polylines
+            linePolylines.forEach(l => mapInstance.removeLayer(l));
+            linePolylines = [];
+
+            const latlngs = [];
+
+            poles.forEach(p => {
+                const isFault = p.status === 'FAULT' || p.status === 'FROND_STRIKE' || p.status === 'POWER_FAIL';
+                const isCommLoss = p.status === 'COMM_LOSS';
+                const color = isFault ? '#dc2626' : (isCommLoss ? '#d97706' : '#059669');
+
+                latlngs.push([p.lat, p.lon]);
+
+                if (poleMarkers[p.pole_id]) {
+                    poleMarkers[p.pole_id].setLatLng([p.lat, p.lon]);
+                    poleMarkers[p.pole_id].setStyle({ color: color, fillColor: color });
+                } else {
+                    const marker = L.circleMarker([p.lat, p.lon], {
+                        radius: 8,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.9,
+                        weight: 2
+                    }).addTo(mapInstance);
+
+                    marker.bindPopup(`<b>${p.pole_id}: ${p.name}</b><br>Section: ${p.section}<br>Status: <b>${p.status}</b><br>Battery: ${p.battery_v}V`);
+                    poleMarkers[p.pole_id] = marker;
+                }
+            });
+
+            // Draw line sections between poles
+            if (latlngs.length > 1) {
+                const line = L.polyline(latlngs, {
+                    color: '#0284c7',
+                    weight: 3,
+                    dashArray: '6, 6'
+                }).addTo(mapInstance);
+                linePolylines.push(line);
+            }
+        }
+
+        // Fetch Live Telemetry
+        function fetchPoleStatus() {
+            fetch("/api/line-fault/poles")
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        renderPoleList(data.poles);
+                        updateMap(data.poles);
+                        if (data.gateway) {
+                            document.getElementById("gwStatus").textContent = data.gateway.status;
+                            document.getElementById("gwWifi").textContent = `Wi-Fi: ${data.gateway.wifi_ssid} (${data.gateway.wifi_rssi_dbm} dBm)`;
+                            document.getElementById("gwQueue").textContent = `Offline Queue: ${data.gateway.queued_offline_events} Events`;
+                        }
+
+                        // Update KPIs
+                        const faultedCount = data.poles.filter(p => p.status === 'FAULT' || p.status === 'FROND_STRIKE').length;
+                        const commLossCount = data.poles.filter(p => p.status === 'COMM_LOSS').length;
+
+                        const faultEl = document.getElementById("kpiActiveFaults");
+                        faultEl.textContent = `${faultedCount} Faults`;
+                        faultEl.className = "kpi-val " + (faultedCount > 0 ? "red" : "green");
+
+                        const hbEl = document.getElementById("kpiHeartbeat");
+                        if (commLossCount > 0) {
+                            hbEl.textContent = `${commLossCount} DISCONNECTED`;
+                            hbEl.className = "kpi-val amber";
+                        } else {
+                            hbEl.textContent = "100% HEALTHY";
+                            hbEl.className = "kpi-val green";
+                        }
+                    }
+                })
+                .catch(e => console.error("Error fetching poles:", e));
+        }
+
+        function renderPoleList(poles) {
+            const container = document.getElementById("poleNodesContainer");
+            let html = "";
+            poles.forEach(p => {
+                const isFault = p.status === 'FAULT' || p.status === 'FROND_STRIKE' || p.status === 'POWER_FAIL';
+                const isCommLoss = p.status === 'COMM_LOSS';
+                const statusClass = isFault ? 'status-fault' : (isCommLoss ? 'status-commloss' : 'status-healthy');
+                const cardClass = isFault ? 'fault' : (isCommLoss ? 'comm-loss' : '');
+
+                html += `
+                <div class="pole-card-item ${cardClass}">
+                    <div class="pole-top-row">
+                        <div>
+                            <span class="pole-id-badge">${p.pole_id}</span>
+                            <strong style="margin-left:6px; font-size:13px; color:#0f172a;">${p.name}</strong>
+                        </div>
+                        <span class="badge-status ${statusClass}">${p.status}</span>
+                    </div>
+                    <div style="font-size:11px; color:#64748b;">Section: ${p.section}</div>
+                    <div class="pole-specs-row">
+                        <span>MAC: ${p.mac_address.slice(-8)}</span>
+                        <span>RSSI: ${p.esp_now_rssi} dBm</span>
+                        <span>Batt: ${p.battery_v}V</span>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Fetch Incident History
+        function fetchFaultHistory() {
+            fetch("/api/line-fault/history")
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        renderFaultTable(data.history);
+                    }
+                })
+                .catch(e => console.error("Error fetching history:", e));
+        }
+
+        function renderFaultTable(history) {
+            const tbody = document.getElementById("faultTableBody");
+            if (!history || history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">No fault incidents recorded. Feeder is healthy.</td></tr>`;
+                return;
+            }
+
+            document.getElementById("faultCountLabel").textContent = `${history.length} incident records logged`;
+
+            let html = "";
+            history.forEach(f => {
+                const isResolved = f.resolved === 1;
+                const sevBadge = f.severity === 'CRITICAL' ? 'status-fault' : 'status-commloss';
+
+                html += `
+                <tr>
+                    <td style="font-family:'JetBrains Mono', monospace; font-weight:700;">#${f.id}</td>
+                    <td>
+                        <strong style="color:#0f172a;">${f.pole_id}</strong>
+                        <div style="font-size:11px; color:#64748b;">${f.suspected_section}</div>
+                    </td>
+                    <td>
+                        <span class="badge-status ${sevBadge}">${f.fault_type}</span>
+                        <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${f.severity}</div>
+                    </td>
+                    <td style="font-size:12px; color:#334155; max-width:280px; line-height:1.4;">
+                        ${f.sensor_evidence || "Isolated opto-bridge signal loss."}
+                    </td>
+                    <td style="font-size:11px; color:#475569; max-width:220px;">
+                        <i class="fa-solid fa-bell" style="color:#059669;"></i> ${f.notified_officers}
+                    </td>
+                    <td style="font-size:11px; color:#64748b; font-family:'JetBrains Mono', monospace;">
+                        ${f.timestamp}
+                    </td>
+                    <td>
+                        ${isResolved 
+                            ? `<span class="tag-resolved"><i class="fa-solid fa-circle-check"></i> Cleared</span><div style="font-size:10px; color:#94a3b8;">${f.resolution_time || ''}</div>`
+                            : `<button type="button" class="btn-resolve" onclick="resolveFault(${f.id})">Mark Cleared</button>`
+                        }
+                    </td>
+                </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Fault Simulation Handler
+        function handleSimulateFault(e) {
+            e.preventDefault();
+            const poleId = document.getElementById("simPoleSelect").value;
+            const faultType = document.getElementById("simFaultType").value;
+
+            fetch("/api/line-fault/simulate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pole_id: poleId, fault_type: faultType })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Alert Dispatched: ${data.event.fault_type} on ${data.event.pole_id}!\nNotified: ${data.event.officers_notified}`);
+                    fetchPoleStatus();
+                    fetchFaultHistory();
+                }
+            })
+            .catch(e => console.error("Sim error:", e));
+        }
+
+        function resolveFault(faultId) {
+            fetch(`/api/line-fault/resolve/${faultId}`, { method: "POST" })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchPoleStatus();
+                        fetchFaultHistory();
+                    }
+                })
+                .catch(e => console.error("Resolve error:", e));
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            initMap();
+            fetchPoleStatus();
+            fetchFaultHistory();
+            setInterval(fetchPoleStatus, 10000);
+        });
+    </script>
+</body>
+</html>
+

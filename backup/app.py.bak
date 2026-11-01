@@ -1,0 +1,387 @@
+
+import os
+import json
+import sqlite3
+import threading
+from datetime import datetime, timezone, timedelta
+from io import StringIO
+
+import pandas as pd
+import requests
+from flask import Flask, render_template, jsonify, request
+
+
+app = Flask(__name__)
+
+# Set these environment variables to your farm's coordinates.
+FARM_LAT = os.getenv("FARM_LAT", "28.6139")
+FARM_LON = os.getenv("FARM_LON", "77.2090")
+
+DB_PATH = "farm_data.db"
+
+NOAA_URL = (
+    "https://www.cpc.ncep.noaa.gov/"
+    "products/analysis_monitoring/enso/oni/v6/index.php"
+)
+
+WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
+
+CACHE_SECONDS = 24 * 60 * 60
+WEATHER_CACHE_SECONDS = 10 * 60
+
+lock = threading.Lock()
+enso_cache = {"checked": None, "data": None}
+weather_cache = {"checked": None, "data": None}
+
+
+def now_utc():
+    return datetime.now(timezone.utc)
+
+
+def timestamp():
+    return now_utc().isoformat(timespec="seconds")
+
+
+def connect_db():
+    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    with connect_db() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sensor_readings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                received_at TEXT NOT NULL,
+                root_zone_moisture_pct REAL,
+                farm_air_temp_c REAL,
+                farm_air_humidity_pct REAL,
+                soil_temp_c REAL
+            )
+        """)
+
+
+def get_enso(force=False):
+    """Retrieve the latest available ONI table from NOAA."""
+    with lock:
+        checked = enso_cache["checked"]
+
+        if (
+            not force
+            and checked
+            and (now_utc() - checked).total_seconds() < CACHE_SECONDS
+        ):
+            return enso_cache["data"]
+
+        try:
+            response = requests.get(
+                NOAA_URL,
+                timeout=20,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+            )
+            response.raise_for_status()
+
+            tables = pd.read_html(StringIO(response.text))
+            seasons = [
+                "DJF", "JFM", "FMA", "MAM",
+                "AMJ", "MJJ", "JJA", "JAS",
+                "ASO", "SON", "OND", "NDJ"
+            ]
+
+            result = None
+
+            for df in tables:
+                if len(df) > 0 and any(str(val).strip().lower() == "year" for val in df.iloc[0]):
+                    df.columns = df.iloc[0]
+                    df = df.iloc[1:]
+
+                # NOAA tables may have multi-row headers.
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = [
+                        " ".join(str(x) for x in col
+                                 if str(x) != "nan").strip()
+                        for col in df.columns
+                    ]
+
+                df.columns = [
+                    str(c).strip() for c in df.columns
+                ]
+
+                year_col = next(
+                    (c for c in df.columns
+                     if str(c).lower() == "year"),
+                    None
+                )
+                if year_col is None:
+                    continue
+
+                available = [
+                    s for s in seasons if s in df.columns
+                ]
+                if not available:
+                    continue
+
+                df[year_col] = pd.to_numeric(
+                    df[year_col], errors="coerce"
+                )
+                df = df.dropna(subset=[year_col]).copy()
+                df = df.sort_values(year_col, ascending=False)
+
+                for _, row in df.iterrows():
+                    for season in reversed(available):
+                        value = pd.to_numeric(
+                            row[season], errors="coerce"
+                        )
+                        if pd.notna(value):
+                            oni = float(value)
+
+                            if oni >= 0.5:
+                                phase = "El Niño"
+                            elif oni <= -0.5:
+                                phase = "La Niña"
+                            else:
+                                phase = "Neutral"
+
+                            result = {
+                                "value": oni,
+                                "value_c": oni,
+                                "period": (
+                                    f"{season} "
+                                    f"{int(row[year_col])}"
+                                ),
+                                "phase": phase,
+                                "source": "NOAA CPC",
+                                "source_url": NOAA_URL,
+                                "checked_at": timestamp()
+                            }
+                            break
+
+                    if result:
+                        break
+
+                if result:
+                    break
+
+            if not result:
+                raise ValueError(
+                    "Could not identify the ONI table. "
+                    "NOAA's page format may have changed."
+                )
+
+            enso_cache["data"] = result
+            enso_cache["checked"] = now_utc()
+            return result
+
+        except Exception as exc:
+            # Keep the last successful reading, if there is one.
+            if enso_cache["data"]:
+                stale = dict(enso_cache["data"])
+                stale["warning"] = str(exc)
+                stale["stale"] = True
+                return stale
+
+            return {
+                "error": str(exc),
+                "source_url": NOAA_URL
+            }
+
+
+def get_weather(force=False):
+    """Retrieve current local outdoor weather from Open-Meteo."""
+    with lock:
+        checked = weather_cache["checked"]
+
+        if (
+            not force
+            and checked
+            and (now_utc() - checked).total_seconds()
+            < WEATHER_CACHE_SECONDS
+        ):
+            return weather_cache["data"]
+
+        if not FARM_LAT or not FARM_LON:
+            return {
+                "error": (
+                    "Set FARM_LAT and FARM_LON to your farm "
+                    "coordinates before requesting weather."
+                )
+            }
+
+        try:
+            response = requests.get(
+                WEATHER_URL,
+                params={
+                    "latitude": FARM_LAT,
+                    "longitude": FARM_LON,
+                    "current": (
+                        "temperature_2m,relative_humidity_2m,"
+                        "precipitation,wind_speed_10m"
+                    ),
+                    "timezone": "auto"
+                },
+                timeout=15
+            )
+            response.raise_for_status()
+            payload = response.json()
+            current = payload.get("current")
+
+            if not current:
+                raise ValueError("Weather API returned no current data.")
+
+            result = {
+                "temperature_c": current.get("temperature_2m"),
+                "humidity_pct": current.get("relative_humidity_2m"),
+                "precipitation_mm": current.get("precipitation"),
+                "wind_speed_kmh": current.get("wind_speed_10m"),
+                "observed_at": current.get("time"),
+                "source": "Open-Meteo",
+                "checked_at": timestamp()
+            }
+
+            weather_cache["data"] = result
+            weather_cache["checked"] = now_utc()
+            return result
+
+        except Exception as exc:
+            if weather_cache["data"]:
+                stale = dict(weather_cache["data"])
+                stale["warning"] = str(exc)
+                stale["stale"] = True
+                return stale
+
+            return {"error": str(exc)}
+
+
+def latest_sensor_reading():
+    with connect_db() as conn:
+        row = conn.execute("""
+            SELECT * FROM sensor_readings
+            ORDER BY id DESC LIMIT 1
+        """).fetchone()
+
+    if row is None:
+        return None
+
+    result = dict(row)
+    result["soil_moisture"] = result.get("root_zone_moisture_pct")
+    result["temperature"] = result.get("farm_air_temp_c")
+    result["humidity"] = result.get("farm_air_humidity_pct")
+    result["age_seconds"] = max(
+        0,
+        int(
+            (now_utc() - datetime.fromisoformat(
+                result["received_at"]
+            )).total_seconds()
+        )
+    )
+    return result
+
+
+@app.route("/")
+def dashboard():
+    return render_template("index.html")
+
+
+@app.route("/api/dashboard")
+def dashboard_data():
+    return jsonify({
+        "enso": get_enso(),
+        "weather": get_weather(),
+        "sensor": latest_sensor_reading(),
+        "server_time": timestamp()
+    })
+
+
+@app.route("/api/enso/refresh", methods=["POST"])
+def refresh_enso():
+    return jsonify(get_enso(force=True))
+
+
+@app.route("/api/weather/refresh", methods=["POST"])
+def refresh_weather():
+    return jsonify(get_weather(force=True))
+
+
+@app.route("/api/sensor", methods=["POST"])
+def receive_sensor():
+    """
+    The LoRa receiver sends a JSON POST request here.
+    Accept only actual readings received from your hardware.
+    """
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "Expected a JSON object."}), 400
+
+    fields = [
+        "root_zone_moisture_pct",
+        "farm_air_temp_c",
+        "farm_air_humidity_pct",
+        "soil_temp_c"
+    ]
+
+    cleaned = {}
+
+    for field in fields:
+        value = data.get(field)
+
+        if value is None:
+            cleaned[field] = None
+            continue
+
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return jsonify({
+                "error": f"{field} must be a number or null."
+            }), 400
+
+        if not pd.notna(value):
+            return jsonify({
+                "error": f"{field} must be finite."
+            }), 400
+
+        if field in (
+            "root_zone_moisture_pct",
+            "farm_air_humidity_pct"
+        ) and not 0 <= value <= 100:
+            return jsonify({
+                "error": f"{field} must be between 0 and 100."
+            }), 400
+
+        cleaned[field] = value
+
+    if all(cleaned[field] is None for field in fields):
+        return jsonify({
+            "error": "At least one actual sensor reading is required."
+        }), 400
+
+    with connect_db() as conn:
+        conn.execute("""
+            INSERT INTO sensor_readings (
+                received_at,
+                root_zone_moisture_pct,
+                farm_air_temp_c,
+                farm_air_humidity_pct,
+                soil_temp_c
+            ) VALUES (?, ?, ?, ?, ?)
+        """, (
+            timestamp(),
+            cleaned["root_zone_moisture_pct"],
+            cleaned["farm_air_temp_c"],
+            cleaned["farm_air_humidity_pct"],
+            cleaned["soil_temp_c"]
+        ))
+
+    return jsonify({
+        "status": "saved",
+        "received_at": timestamp()
+    }), 201
+
+
+
+if __name__ == "__main__":
+    init_db()
+    app.run(host="0.0.0.0", port=5000, debug=True)
+

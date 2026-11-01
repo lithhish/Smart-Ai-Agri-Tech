@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate & Farm Intelligence</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 48px 56px;
+            background-color: #ffffff;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .dashboard-container {
+            max-width: 760px;
+        }
+
+        h1.dashboard-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0 0 36px 0;
+            letter-spacing: -0.015em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            row-gap: 40px;
+            column-gap: 72px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 24px 20px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                row-gap: 32px;
+            }
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .icon {
+            width: 22px;
+            height: 22px;
+            color: #0f172a;
+            margin-bottom: 10px;
+            stroke-width: 1.8;
+        }
+
+        .label {
+            font-size: 15px;
+            color: #64748b;
+            margin: 0 0 6px 0;
+            font-weight: 400;
+        }
+
+        .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+
+        .subtext {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .details {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .refresh-bar {
+            margin-top: 48px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-refresh {
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .btn-refresh:hover {
+            background: #334155;
+        }
+
+        .status-footer {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <h1 class="dashboard-title">CLIMATE &amp; FARM INTELLIGENCE</h1>
+
+        <div class="grid">
+            <!-- Top Left: ENSO -->
+            <section class="card">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path
+                        d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <div class="label">El Niño / ENSO</div>
+                <div id="enso" class="value">Loading...</div>
+                <div id="ensoSubtext" class="subtext">Pacific Ocean index, °C</div>
+            </section>
+
+            <!-- Top Right: Live local air -->
+            <section class="card">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M17 12a5 5 0 1 0-10 0" />
+                </svg>
+                <div class="label">Live local air</div>
+                <div id="weather" class="value">Loading...</div>
+                <div id="weatherSubtext" class="subtext">Weather API example</div>
+                <div id="weatherDetails" class="details"></div>
+            </section>
+
+            <!-- Bottom Left: Farm air temperature -->
+            <section class="card">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+                </svg>
+                <div class="label">Farm air temperature</div>
+                <div id="farmTemp" class="value">No sensor data</div>
+                <div id="farmTempSubtext" class="subtext">Sensor example</div>
+            </section>
+
+            <!-- Bottom Right: Root-zone soil -->
+            <section class="card">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 20h10M12 20v-8M12 12A6 6 0 0 0 6 6c0 6 6 6 6 6s6 0 6-6a6 6 0 0 0-6 6z" />
+                </svg>
+                <div class="label">Root-zone soil</div>
+                <div id="soilMoisture" class="value">No sensor data</div>
+                <div id="soilSubtext" class="subtext">Soil sensor example</div>
+            </section>
+        </div>
+
+        <div class="refresh-bar">
+            <button class="btn-refresh" onclick="loadDashboard()">Refresh Data</button>
+            <span id="updated" class="status-footer">Waiting for dashboard data...</span>
+        </div>
+    </div>
+
+    <script>
+        function showValue(value, unit = "") {
+            if (value === null || value === undefined || value === "") {
+                return "Unavailable";
+            }
+            return value + unit;
+        }
+
+        async function loadDashboard() {
+            const updated = document.getElementById("updated");
+            updated.textContent = "Loading dashboard...";
+
+            try {
+                const response = await fetch("/api/dashboard");
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
+                const data = await response.json();
+
+                // 1. ENSO
+                const enso = data.enso || {};
+                const oniVal = enso.value_c ?? enso.value;
+                if (enso.phase && oniVal !== undefined && oniVal !== null) {
+                    const sign = oniVal > 0 ? "+" : "";
+                    document.getElementById("enso").textContent = enso.phase + " (" + sign + oniVal + "°C)";
+                } else if (enso.phase) {
+                    document.getElementById("enso").textContent = enso.phase;
+                } else {
+                    document.getElementById("enso").textContent = "Status + anomaly";
+                }
+                document.getElementById("ensoSubtext").textContent = "Pacific Ocean index, °C";
+
+                // 2. Live local air (Weather)
+                const weather = data.weather || {};
+                const temp = weather.temperature_c ?? weather.temperature ?? weather.temperature_2m;
+                const humidity = weather.humidity_pct ?? weather.humidity ?? weather.relative_humidity_2m;
+                const wind = weather.wind_speed_kmh;
+
+                document.getElementById("weather").textContent =
+                    temp !== undefined && temp !== null ? Math.round(temp) + "°C" : "Unavailable";
+                document.getElementById("weatherSubtext").textContent = "Weather API example";
+
+                let detailsParts = [];
+                if (humidity !== undefined && humidity !== null) {
+                    detailsParts.push("Humidity: " + humidity + "%");
+                }
+                if (wind !== undefined && wind !== null) {
+                    detailsParts.push("Wind: " + wind + " km/h");
+                }
+                document.getElementById("weatherDetails").textContent = detailsParts.length ? detailsParts.join(" | ") : "";
+
+                // 3. Farm air temperature
+                const sensor = data.sensor || {};
+                const farmTemp = sensor.farm_air_temp_c ?? sensor.temperature;
+                const farmHumid = sensor.farm_air_humidity_pct ?? sensor.humidity;
+
+                document.getElementById("farmTemp").textContent =
+                    farmTemp !== undefined && farmTemp !== null ? Math.round(farmTemp) + "°C" : "No sensor data";
+                document.getElementById("farmTempSubtext").textContent =
+                    farmHumid !== undefined && farmHumid !== null ? "Sensor example (" + farmHumid + "% humidity)" : "Sensor example";
+
+                // 4. Root-zone soil
+                const moisture = sensor.root_zone_moisture_pct ?? sensor.soil_moisture;
+
+                if (moisture !== undefined && moisture !== null) {
+                    document.getElementById("soilMoisture").textContent = moisture + "%";
+                } else {
+                    document.getElementById("soilMoisture").textContent = "No sensor data";
+                }
+                document.getElementById("soilSubtext").textContent = "Soil sensor example";
+
+                updated.textContent =
+                    "Last checked: " + (data.server_time ? new Date(data.server_time).toLocaleTimeString() : new Date().toLocaleTimeString());
+            } catch (error) {
+                updated.textContent = "Could not load dashboard: " + error.message;
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>
